@@ -1,21 +1,27 @@
-import cv2
 import os
+import cv2
+import torch
+from torch.utils.data import Dataset
 
-
-def get_image_list_from_directory(directory):
-    return os.listdir(directory)
-
-
-original_image_path = "Cropped_Betta_V1"
-image_list = get_image_list_from_directory(original_image_path)
-
-print(image_list)
-
-for i in range(3):
-    print(image_list[i])
-    img = cv2.imread(original_image_path + os.sep + image_list[i])
-    img = cv2.resize(img,(600,600))
-    cv2.imwrite(original_image_path + os.sep + image_list[i] + "___2.jpg",img)
-    # cv2.imshow("img",img)
-
-
+class BettaDataset(Dataset):
+    def __init__(self):
+        self.images_dir = "betta_60"
+        image_list = os.listdir(self.images_dir)
+        print("Dataset contains ", len(image_list), " betta images.")
+        self.data = []
+        for image_name in image_list:
+            image_label = "betta"
+            image_path = self.images_dir + os.sep + image_name
+            self.data.append([image_path, image_label])
+        self.class_map = {"betta" : 0}
+        
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idex):
+        image_path, class_name = self.data[idex]
+        image = cv2.imread(image_path)
+        class_id = self.class_map[class_name]
+        image_tensor = torch.from_numpy(image) / 255
+        image_tensor = image_tensor.permute(2, 0, 1)
+        return image_tensor, class_id
